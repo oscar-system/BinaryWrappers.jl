@@ -10,11 +10,11 @@ execute those directly without having to adjust LIBPATH environment variables.
 The wrapper generation should be triggered during precompilation with
 ```
     using BinaryWrappers
-    @generate_wrappers(lib4ti2_jll)
+    const lib4ti2_binpath = @generate_wrappers(lib4ti2_jll)
 ```
 and the corresponding path might be used in `__init__() as follows:
 ```
-    ENV["PATH"] = BinaryWrappers.get_path(lib4ti2_jll) * ":" * ENV["PATH"]
+    ENV["PATH"] = lib4ti2_binpath * ":" * ENV["PATH"]
 ```
 
 ## Warning
