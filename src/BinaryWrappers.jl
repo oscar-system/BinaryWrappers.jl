@@ -7,8 +7,8 @@ using JLLWrappers
 
 const wrapper_key = "binarywrappers_v$(VERSION.major).$(VERSION.minor)"
 
-# use @generate instead to automatically deduce the calling module
-function generate_wrappers(m::Module, caller::Union{Module,Nothing})
+# use @generate_wrappers instead to automatically deduce the calling module
+function generate_wrappers(m::Module, caller::Union{Module, Base.UUID, Nothing})
     # we generate wrappers per minor julia version
     # the scratch will belong to the jll which the wrappers are generated for
     # and the usage is tied to the module calling the `@generate` macro.
