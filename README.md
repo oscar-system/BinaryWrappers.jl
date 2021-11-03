@@ -12,11 +12,12 @@ The wrapper generation should be triggered during precompilation with
     using BinaryWrappers
     const lib4ti2_binpath = @generate_wrappers(lib4ti2_jll)
 ```
-and the corresponding path might be used in `__init__() as follows:
+and the corresponding path might be used in `__init__()` as follows:
 ```
     ENV["PATH"] = lib4ti2_binpath * ":" * ENV["PATH"]
 ```
 
-## Warning
-This was primarily written to provide wrappers for `lib4ti2_jll` but it might work for other JLL packages as well.
+## Warnings
+- Only Linux and macOS are supported.
+- This was primarily written to provide wrappers for `lib4ti2_jll` which comes with a bunch of shell scripts that need special care, but it might work for other JLL packages as well.
 
