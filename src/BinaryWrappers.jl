@@ -21,40 +21,40 @@ function generate_wrappers(m::Module, caller::Union{Module, Base.UUID, Nothing})
     sourcebinary = joinpath(bindir,"\$(basename \$0)")
     libpath = getproperty(m, :LIBPATH)[]
 
-    wrapper = binpath("binary_wrapper")
-    write(wrapper, """
+    wrapper = """
         #!/bin/sh
         # Since we cannot run these binaries through the usual julia commands we need
         # this wrapper that sets up the correct library paths.
         export $(JLLWrappers.LIBPATH_env)="$(libpath)"
         exec $(sourcebinary) "\$@"
-        """)
+        """
 
-    scriptwrapper = binpath("script_wrapper")
-    chmod(wrapper, 0o755)
     # For shell scripts we use `source` (.) instead of exec to avoid macOS stripping
-    # the LIBPATH. But this means \$0 will still point to the symlink in our wrapper 
-    # directory. 
-    # So we do not need to adjust any library paths here.
-    write(scriptwrapper, """
-        #!/bin/sh
+    # the LIBPATH. This means \$0 will point to our wrapper.
+    # For 4ti2 this means that its own wrapper scripts will call our wrapper for the
+    # binaries, so strictly speaking adjusting the LIBPATH here is not necessary.
+    scriptwrapper = """
         # We cannot run shell scripts directly as macOS will remove
         # DYLD_FALLBACK_LIBRARY_PATH for any subshells.
+        # So we source the original script instead.
         export $(JLLWrappers.LIBPATH_env)="$(libpath)"
         . $(sourcebinary) "\$@"
-        """)
-    chmod(scriptwrapper, 0o755)
+        """
 
-    shellre = r"^#!/bin/(ba|da|z|c|tc)?sh"
+    # POSIX compatible shells
+    shellre = r"^#!/bin/(ba|da|z|k)?sh"
 
     for bin in readdir(bindir)
-        if isfile(joinpath(bindir, bin)) && !islink(binpath(bin))
+        if isfile(joinpath(bindir, bin))
             # shell scripts use a different wrapper because macOS...
-            if occursin(shellre, String(read(joinpath(bindir, bin), 10)))
-                symlink(basename(scriptwrapper), binpath(bin))
+            rm(binpath(bin); force=true)
+            m = match(shellre, String(read(joinpath(bindir, bin), 11)))
+            if m != nothing
+                write(binpath(bin), m.match * "\n" * scriptwrapper)
             else
-                symlink(basename(wrapper), binpath(bin))
+                write(binpath(bin), wrapper)
             end
+            chmod(binpath(bin), 0o755)
         end
     end
     return binpath("")
