@@ -46,15 +46,18 @@ function generate_wrappers(m::Module, caller::Union{Module, Base.UUID, Nothing})
 
     for bin in readdir(bindir)
         if isfile(joinpath(bindir, bin))
+            (tmpfile, tmpio) = mktemp(binpath(""),cleanup=false)
             # shell scripts use a different wrapper because macOS...
-            rm(binpath(bin); force=true)
             m = match(shellre, String(read(joinpath(bindir, bin), 11)))
             if m != nothing
-                write(binpath(bin), m.match * "\n" * scriptwrapper)
+                write(tmpio, m.match * "\n" * scriptwrapper)
             else
-                write(binpath(bin), wrapper)
+                write(tmpio, wrapper)
             end
-            chmod(binpath(bin), 0o755)
+            close(tmpio)
+            chmod(tmpfile, 0o755)
+            # using mv would introduce some race conditions due to concurrent deletes
+            Base.Filesystem.rename(tmpfile, binpath(bin))
         end
     end
     return binpath("")
