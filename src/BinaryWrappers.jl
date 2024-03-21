@@ -66,7 +66,7 @@ end
 # this behaves slightly different than the @get_scratch! function:
 # it will associate the scratch to the module passed as argument
 # and use the calling module for the scratch usage (for gc)
-macro generate_wrappers(m::Symbol)
+macro generate_wrappers(m::Union{Symbol,Expr})
     uuid = Base.PkgId(__module__).uuid
     return quote
         generate_wrappers($(esc(m)), $(esc(uuid)))
